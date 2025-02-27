@@ -1,37 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'controllers/auth_controller.dart';
-import 'services/firebase_service.dart';
-import 'views/auth/login_screen.dart';
-import 'views/home_screen.dart';
+import 'controllers/theme_controller.dart';
+import 'controllers/task_controller.dart';
+import 'models/task_model.dart';
+
+import 'views/auth/auth_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await FirebaseService.initialize();
 
-  runApp(const MyApp());
+  // ✅ Initialize Firebase
+  await Firebase.initializeApp();
+
+  // ✅ Initialize Hive
+  await Hive.initFlutter();
+
+  // ✅ Register Hive Adapters
+  Hive.registerAdapter(TaskAdapter());
+  Hive.registerAdapter(PriorityAdapter()); // ✅ Register Priority adapter
+  Hive.registerAdapter(SubTaskAdapter());
+  // ✅ Open Hive Box Before Using It
+  await Hive.openBox<Task>('tasks');
+
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => AuthController(),
-      child: MaterialApp(
-        title: 'Task Manager',
-        debugShowCheckedModeBanner: false,
-        home: AuthWrapper(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => AuthController()),
+        ChangeNotifierProvider(create: (context) => ThemeController()),
+        ChangeNotifierProvider(create: (context) => TaskController()), // ✅ Ensure TaskController works properly
+      ],
+      child: Consumer<ThemeController>(
+        builder: (context, themeController, child) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: themeController.isDarkMode ? ThemeData.dark() : ThemeData.light(),
+            home: AuthWrapper(),
+          );
+        },
       ),
     );
-  }
-}
-
-class AuthWrapper extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final authController = Provider.of<AuthController>(context);
-    return authController.user == null ? LoginScreen() : HomeScreen();
   }
 }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:task_manager/views/tasks/task_list_screen.dart';
 import '../../controllers/auth_controller.dart';
-import '../home_screen.dart'; // ✅ Import HomeScreen
-import 'register_screen.dart'; // ✅ Import RegisterScreen
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -53,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     } else {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => HomeScreen()),
+                        MaterialPageRoute(builder: (context) => TaskListScreen()),
                       ); // ✅ Fix reference
                     }
                   },
@@ -70,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 } else {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => HomeScreen()),
+                    MaterialPageRoute(builder: (context) => TaskListScreen()),
                   );
                 }
               },
