@@ -36,12 +36,12 @@ class Task {
     required this.subtasks,
   });
 
-  /// ✅ Toggle task completion
+  ///  Toggle task completion
   void toggleCompleted() {
     isCompleted = !isCompleted;
   }
 
-  /// ✅ Convert Task to a Firestore-friendly Map
+  /// Convert Task to a Firestore-friendly Map
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -54,7 +54,7 @@ class Task {
     };
   }
 
-  /// ✅ Create Task from Firestore data
+  ///Create Task from Firestore data
   factory Task.fromMap(Map<String, dynamic> map, String docId) {
     return Task(
       id: docId,
@@ -67,7 +67,7 @@ class Task {
     );
   }
 
-  /// ✅ Helper method to get Priority from String
+  ///  Helper method to get Priority from String
   static Priority _getPriorityFromString(String priority) {
     switch (priority.toLowerCase()) {
       case 'low':
@@ -79,7 +79,7 @@ class Task {
     }
   }
 
-  /// ✅ Create a modified copy of Task
+  /// Create a modified copy of Task
   Task copyWith({
     String? id,
     String? title,
@@ -101,7 +101,7 @@ class Task {
   }
 }
 
-/// ✅ Fix: Annotated Priority Enum for Hive
+///  Annotated Priority Enum for Hive
 @HiveType(typeId: 1)
 enum Priority {
   @HiveField(0)
