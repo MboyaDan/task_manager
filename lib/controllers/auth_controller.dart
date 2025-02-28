@@ -22,7 +22,7 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // 🔹 Convert Firebase error codes to user-friendly messages
+  // Convert Firebase error codes to user-friendly messages
   String _getFriendlyErrorMessage(String code) {
     switch (code) {
       case "invalid-credential":
@@ -42,7 +42,7 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  // 🔹 Sign Up with Email & Password
+  // Sign Up with Email & Password
   Future<String?> signUp(String email, String password) async {
     try {
       UserCredential credential = await _auth.createUserWithEmailAndPassword(
@@ -58,7 +58,7 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  // 🔹 Sign In with Email & Password
+  // Sign In with Email & Password
   Future<String?> signIn(String email, String password) async {
     try {
       UserCredential credential = await _auth.signInWithEmailAndPassword(
@@ -74,7 +74,7 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  // 🔹 Google Sign-In
+  // Google Sign-In
   Future<String?> signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
@@ -96,7 +96,7 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  // 🔹 Sign Out
+  // Sign Out
   Future<void> signOut() async {
     await _auth.signOut();
     await _googleSignIn.signOut();
