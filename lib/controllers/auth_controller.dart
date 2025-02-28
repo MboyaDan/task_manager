@@ -9,81 +9,97 @@ class AuthController extends ChangeNotifier {
   UserModel? _user;
 
   AuthController() {
+    // Listen for authentication state changes
     _auth.authStateChanges().listen((User? user) {
-      _user =
-          user != null
-              ? UserModel(uid: user.uid, email: user.email ?? '')
-              : null;
-      notifyListeners();
+      _setUser(user);
     });
   }
 
   UserModel? get user => _user;
 
+  void _setUser(User? user) {
+    _user = user != null ? UserModel(uid: user.uid, email: user.email ?? '') : null;
+    notifyListeners();
+  }
+
+  // 🔹 Convert Firebase error codes to user-friendly messages
+  String _getFriendlyErrorMessage(String code) {
+    switch (code) {
+      case "invalid-credential":
+        return "Invalid email or password.";
+      case "user-not-found":
+        return "No account found with this email.";
+      case "wrong-password":
+        return "Incorrect password.";
+      case "email-already-in-use":
+        return "This email is already in use. Try logging in.";
+      case "weak-password":
+        return "Password should be at least 6 characters.";
+      case "network-request-failed":
+        return "Check your internet connection.";
+      default:
+        return "An unexpected error occurred. Please try again.";
+    }
+  }
+
+  // 🔹 Sign Up with Email & Password
   Future<String?> signUp(String email, String password) async {
     try {
       UserCredential credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      _user = UserModel(
-        uid: credential.user!.uid,
-        email: credential.user!.email ?? '',
-      );
-      notifyListeners();
-      return null;
+      _setUser(credential.user);
+      return null; // No error
+    } on FirebaseAuthException catch (e) {
+      return _getFriendlyErrorMessage(e.code);
     } catch (e) {
-      return e.toString();
+      return "An unexpected error occurred. Please try again.";
     }
   }
 
+  // 🔹 Sign In with Email & Password
   Future<String?> signIn(String email, String password) async {
     try {
       UserCredential credential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      _user = UserModel(
-        uid: credential.user!.uid,
-        email: credential.user!.email ?? '',
-      );
-      notifyListeners();
-      return null;
+      _setUser(credential.user);
+      return null; // No error
+    } on FirebaseAuthException catch (e) {
+      return _getFriendlyErrorMessage(e.code);
     } catch (e) {
-      return e.toString();
+      return "An unexpected error occurred. Please try again.";
     }
   }
 
+  // 🔹 Google Sign-In
   Future<String?> signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return "Google Sign-In canceled";
+      if (googleUser == null) return "Google Sign-In canceled.";
 
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      UserCredential userCredential = await _auth.signInWithCredential(
-        credential,
-      );
-      _user = UserModel(
-        uid: userCredential.user!.uid,
-        email: userCredential.user!.email ?? '',
-      );
-      notifyListeners();
-      return null;
+      UserCredential userCredential = await _auth.signInWithCredential(credential);
+      _setUser(userCredential.user);
+      return null; // No error
+    } on FirebaseAuthException catch (e) {
+      return _getFriendlyErrorMessage(e.code);
     } catch (e) {
-      return e.toString();
+      return "Google Sign-In failed. Please try again.";
     }
   }
 
+  // 🔹 Sign Out
   Future<void> signOut() async {
     await _auth.signOut();
     await _googleSignIn.signOut();
-    _user = null;
-    notifyListeners();
+    _setUser(null);
   }
 }

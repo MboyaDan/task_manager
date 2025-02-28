@@ -6,7 +6,6 @@ import 'controllers/auth_controller.dart';
 import 'controllers/theme_controller.dart';
 import 'controllers/task_controller.dart';
 import 'models/task_model.dart';
-
 import 'views/auth/auth_wrapper.dart';
 
 void main() async {
@@ -20,8 +19,9 @@ void main() async {
 
   // ✅ Register Hive Adapters
   Hive.registerAdapter(TaskAdapter());
-  Hive.registerAdapter(PriorityAdapter()); // ✅ Register Priority adapter
+  Hive.registerAdapter(PriorityAdapter());
   Hive.registerAdapter(SubTaskAdapter());
+
   // ✅ Open Hive Box Before Using It
   await Hive.openBox<Task>('tasks');
 
@@ -33,16 +33,16 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => AuthController()),
+        ChangeNotifierProvider(create: (context) => AuthController()), // ✅ Ensures AuthController is initialized
         ChangeNotifierProvider(create: (context) => ThemeController()),
-        ChangeNotifierProvider(create: (context) => TaskController()), // ✅ Ensure TaskController works properly
+        ChangeNotifierProvider(create: (context) => TaskController()),
       ],
       child: Consumer<ThemeController>(
         builder: (context, themeController, child) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             theme: themeController.isDarkMode ? ThemeData.dark() : ThemeData.light(),
-            home: AuthWrapper(),
+            home: AuthWrapper(), // ✅ Loads the correct screen based on user auth state
           );
         },
       ),

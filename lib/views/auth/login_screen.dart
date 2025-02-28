@@ -8,18 +8,32 @@ import '../tasks/task_list_screen.dart';
 class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final authController = Provider.of<AuthController>(context);
-
     return Scaffold(
-      body: AuthForm(
-        title: "Login",
-        buttonText: "Login",
-        onSubmit: (email, password) => authController.signIn(email, password),
-        onGoogleSignIn: () => authController.signInWithGoogle(),
-        switchScreen: () => Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => RegisterScreen()),
-        ),
+      body: Consumer<AuthController>(
+        builder: (context, authController, child) {
+          // ✅ Ensure context is mounted before navigation
+          if (authController.user != null) {
+            Future.microtask(() {
+              if (context.mounted) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => TaskListScreen()),
+                );
+              }
+            });
+          }
+
+          return AuthForm(
+            title: "Login",
+            buttonText: "Login",
+            onSubmit: (email, password) => authController.signIn(email, password),
+            onGoogleSignIn: () => authController.signInWithGoogle(),
+            switchScreen: () => Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => RegisterScreen()),
+            ),
+          );
+        },
       ),
     );
   }

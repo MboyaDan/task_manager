@@ -41,7 +41,6 @@ class _TaskListScreenState extends State<TaskListScreen> {
             icon: Icon(Icons.logout),
             onPressed: () async {
               await authController.signOut();
-              Navigator.pushReplacementNamed(context, '/login');
             },
           ),
         ],

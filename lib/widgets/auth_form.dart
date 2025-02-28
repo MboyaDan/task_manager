@@ -6,14 +6,14 @@ class AuthForm extends StatefulWidget {
   final String buttonText;
   final VoidCallback switchScreen;
   final Future<String?> Function(String email, String password) onSubmit;
-  final Future<String?> Function()? onGoogleSignIn; // Google Sign-In callback
+  final Future<String?> Function()? onGoogleSignIn;
 
   const AuthForm({
     required this.title,
     required this.buttonText,
     required this.switchScreen,
     required this.onSubmit,
-    this.onGoogleSignIn, // Optional for screens without Google Sign-In
+    this.onGoogleSignIn,
     Key? key,
   }) : super(key: key);
 
@@ -26,7 +26,7 @@ class _AuthFormState extends State<AuthForm> with SingleTickerProviderStateMixin
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
-  bool _isGoogleLoading = false; // Track Google sign-in loading
+  bool _isGoogleLoading = false;
   String? _errorMessage;
   late AnimationController _controller;
 
@@ -43,10 +43,17 @@ class _AuthFormState extends State<AuthForm> with SingleTickerProviderStateMixin
     _controller.forward(from: 0);
   }
 
+  void _clearError() {
+    setState(() {
+      _errorMessage = null;
+    });
+  }
+
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
+    _clearError();
 
     String? error = await widget.onSubmit(
       _emailController.text.trim(),
@@ -56,7 +63,7 @@ class _AuthFormState extends State<AuthForm> with SingleTickerProviderStateMixin
     setState(() => _isLoading = false);
 
     if (error != null) {
-      _showError(error);
+      _showError(error); // Error is already formatted in AuthController
     }
   }
 
@@ -64,13 +71,14 @@ class _AuthFormState extends State<AuthForm> with SingleTickerProviderStateMixin
     if (widget.onGoogleSignIn == null) return;
 
     setState(() => _isGoogleLoading = true);
+    _clearError();
 
     String? error = await widget.onGoogleSignIn!();
 
     setState(() => _isGoogleLoading = false);
 
     if (error != null) {
-      _showError(error);
+      _showError(error); // Error is already formatted in AuthController
     }
   }
 
@@ -85,12 +93,12 @@ class _AuthFormState extends State<AuthForm> with SingleTickerProviderStateMixin
         ),
       ),
       child: Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Tasker Title with Animation
+              // App Title with Animation
               Text(
                 "Tasker",
                 style: Theme.of(context).textTheme.headlineLarge!.copyWith(
@@ -99,9 +107,9 @@ class _AuthFormState extends State<AuthForm> with SingleTickerProviderStateMixin
                 ),
               ).animate().fade(duration: 500.ms).slideY(begin: -0.5, end: 0),
 
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
 
-              // Animated Form
+              // Auth Form
               Card(
                 elevation: 5,
                 color: Colors.white,
@@ -120,16 +128,14 @@ class _AuthFormState extends State<AuthForm> with SingleTickerProviderStateMixin
                             color: Colors.blueGrey[700],
                           ),
                         ),
-                        SizedBox(height: 15),
+                        const SizedBox(height: 15),
 
                         TextFormField(
                           controller: _emailController,
                           decoration: InputDecoration(
                             labelText: "Email",
                             prefixIcon: Icon(Icons.email, color: Colors.blueGrey[600]),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) return "Enter your email";
@@ -139,16 +145,14 @@ class _AuthFormState extends State<AuthForm> with SingleTickerProviderStateMixin
                             return null;
                           },
                         ),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
 
                         TextFormField(
                           controller: _passwordController,
                           decoration: InputDecoration(
                             labelText: "Password",
                             prefixIcon: Icon(Icons.lock, color: Colors.blueGrey[600]),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                           obscureText: true,
                           validator: (value) {
@@ -157,50 +161,47 @@ class _AuthFormState extends State<AuthForm> with SingleTickerProviderStateMixin
                           },
                         ),
 
-                        SizedBox(height: 15),
+                        const SizedBox(height: 15),
 
                         // Error Message Animation
                         if (_errorMessage != null)
                           Text(
                             _errorMessage!,
-                            style: TextStyle(color: Colors.red),
+                            style: const TextStyle(color: Colors.red, fontSize: 14),
                           )
                               .animate(controller: _controller)
                               .shake(duration: 500.ms, hz: 5)
-                              .fadeOut(duration: 2.seconds, delay: 2.seconds),
+                              .fadeOut(duration: 3.seconds, delay: 3.seconds),
 
-                        SizedBox(height: 10),
+                        const SizedBox(height: 10),
 
-                        // Animated Button & Loading Effect
-                        _isLoading
-                            ? SizedBox(
-                          width: 50,
-                          height: 50,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 3,
-                            color: Colors.blueGrey[600],
-                          ).animate().rotate(duration: 1.seconds).scale(delay: 200.ms),
-                        )
-                            : ElevatedButton(
-                          onPressed: _submit,
+                        // Login Button
+                        ElevatedButton(
+                          onPressed: _isLoading ? null : _submit,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueGrey[600],
+                            backgroundColor: _isLoading ? Colors.blueGrey[300] : Colors.blueGrey[600],
                             foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
-                          child: Text(widget.buttonText, style: TextStyle(fontSize: 16)),
+                          child: _isLoading
+                              ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white),
+                          )
+                              : Text(widget.buttonText, style: const TextStyle(fontSize: 16)),
                         ),
 
-                        SizedBox(height: 10),
+                        const SizedBox(height: 10),
 
                         // Google Sign-In Button
                         if (widget.onGoogleSignIn != null)
                           _isGoogleLoading
-                              ? CircularProgressIndicator(
-                            strokeWidth: 3,
-                            color: Colors.blueGrey[600],
-                          ).animate().rotate(duration: 1.seconds).scale(delay: 200.ms)
+                              ? CircularProgressIndicator(strokeWidth: 3, color: Colors.blueGrey[600])
+                              .animate()
+                              .rotate(duration: 1.seconds)
+                              .scale(delay: 200.ms)
                               : OutlinedButton.icon(
                             onPressed: _googleSignIn,
                             icon: Icon(Icons.login, color: Colors.blueGrey[600]),
@@ -210,12 +211,13 @@ class _AuthFormState extends State<AuthForm> with SingleTickerProviderStateMixin
                             ),
                             style: OutlinedButton.styleFrom(
                               side: BorderSide(color: Colors.blueGrey[600]!),
-                              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                             ),
                           ),
 
-                        SizedBox(height: 10),
+                        const SizedBox(height: 10),
 
+                        // Switch Authentication Mode
                         TextButton(
                           onPressed: widget.switchScreen,
                           child: Text(
