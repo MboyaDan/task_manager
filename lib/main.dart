@@ -11,19 +11,27 @@ import 'views/auth/auth_wrapper.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ Initialize Firebase
+  // 🔹 Initialize Firebase
   await Firebase.initializeApp();
 
-  // ✅ Initialize Hive
+  // 🔹 Initialize Hive
   await Hive.initFlutter();
 
-  // ✅ Register Hive Adapters
+  // 🔹 Register Hive Adapters BEFORE opening boxes
   Hive.registerAdapter(TaskAdapter());
   Hive.registerAdapter(PriorityAdapter());
   Hive.registerAdapter(SubTaskAdapter());
 
-  // ✅ Open Hive Box Before Using It
+  // 🔹 Open Hive Boxes
   await Hive.openBox<Task>('tasks');
+  await Hive.openBox<SubTask>('subtasks');
+
+  // 🔹 Debugging: Print stored tasks
+  var taskBox = Hive.box<Task>('tasks');
+  print("📦 Tasks stored in Hive: ${taskBox.length}");
+  for (var task in taskBox.values) {
+    print("🔥 Task: ${task.title} - Subtasks: ${task.subtasks.length}");
+  }
 
   runApp(MyApp());
 }
@@ -33,7 +41,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => AuthController()), // ✅ Ensures AuthController is initialized
+        ChangeNotifierProvider(create: (context) => AuthController()),
         ChangeNotifierProvider(create: (context) => ThemeController()),
         ChangeNotifierProvider(create: (context) => TaskController()),
       ],
@@ -42,7 +50,7 @@ class MyApp extends StatelessWidget {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             theme: themeController.isDarkMode ? ThemeData.dark() : ThemeData.light(),
-            home: AuthWrapper(), // ✅ Loads the correct screen based on user auth state
+            home: AuthWrapper(),
           );
         },
       ),
