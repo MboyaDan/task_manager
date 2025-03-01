@@ -9,7 +9,7 @@ class AuthController extends ChangeNotifier {
   UserModel? _user;
 
   AuthController() {
-    // Listen for authentication state changes
+    //Listen for authentication state changes
     _auth.authStateChanges().listen((User? user) {
       _setUser(user);
     });
@@ -17,12 +17,20 @@ class AuthController extends ChangeNotifier {
 
   UserModel? get user => _user;
 
+  /// Returns the current user's UID.
+  /// This getter assumes the user is logged in.
+  String get userId {
+    if (_user == null) {
+      throw Exception("User not logged in");
+    }
+    return _user!.uid;
+  }
+
   void _setUser(User? user) {
     _user = user != null ? UserModel(uid: user.uid, email: user.email ?? '') : null;
     notifyListeners();
   }
 
-  // Convert Firebase error codes to user-friendly messages
   String _getFriendlyErrorMessage(String code) {
     switch (code) {
       case "invalid-credential":

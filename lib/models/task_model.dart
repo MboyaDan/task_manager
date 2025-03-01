@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 
 part 'task_model.g.dart';
 
-/// ✅ Priority Enum for Hive Storage
+///Priority Enum for Hive Storage
 @HiveType(typeId: 1)
 enum Priority {
   @HiveField(0)
@@ -14,8 +14,7 @@ enum Priority {
   @HiveField(2)
   high,
 }
-
-/// ✅ SubTask Model (Ensures Unique typeId)
+/// SubTask Model (Ensures Unique typeId)
 @HiveType(typeId: 2)
 class SubTask {
   @HiveField(0)
@@ -33,10 +32,10 @@ class SubTask {
     this.isCompleted = false,
   });
 
-  /// ✅ Toggle completion (returns a new SubTask)
+  /// Toggle completion (returns a new SubTask)
   SubTask toggleCompleted() => copyWith(isCompleted: !isCompleted);
 
-  /// ✅ Create a modified copy of SubTask
+  /// Create a modified copy of SubTask
   SubTask copyWith({String? id, String? title, bool? isCompleted}) {
     return SubTask(
       id: id ?? this.id,
@@ -44,8 +43,7 @@ class SubTask {
       isCompleted: isCompleted ?? this.isCompleted,
     );
   }
-
-  /// ✅ Convert SubTask to Firestore-friendly Map
+  /// Convert SubTask to Firestore-friendly Map
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -54,7 +52,7 @@ class SubTask {
     };
   }
 
-  /// ✅ Create SubTask from Firestore data
+  /// Create SubTask from Firestore data
   factory SubTask.fromMap(Map<String, dynamic> map) {
     return SubTask(
       id: map['id'] ?? '',
@@ -64,7 +62,7 @@ class SubTask {
   }
 }
 
-/// ✅ Task Model
+/// Task Model
 @HiveType(typeId: 0)
 class Task {
   @HiveField(0)
@@ -88,6 +86,11 @@ class Task {
   @HiveField(6)
   final List<SubTask> subtasks;
 
+  // New field to associate a task with a user.
+  // If no userId is provided, it defaults to an empty string.
+  @HiveField(7)
+  final String userId;
+
   Task({
     required this.id,
     required this.title,
@@ -96,12 +99,14 @@ class Task {
     required this.dueDate,
     this.isCompleted = false,
     List<SubTask>? subtasks,
-  }) : subtasks = List.unmodifiable(subtasks ?? []);
+    String? userId,
+  })  : subtasks = List.unmodifiable(subtasks ?? []),
+        userId = userId ?? '';
 
-  /// ✅ Toggle task completion (returns a new Task)
+  /// Toggle task completion (returns a new Task)
   Task toggleCompleted() => copyWith(isCompleted: !isCompleted);
 
-  /// ✅ Convert Task to Firestore-friendly Map
+  /// Convert Task to Firestore-friendly Map
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -111,10 +116,11 @@ class Task {
       'dueDate': dueDate.toIso8601String(),
       'isCompleted': isCompleted,
       'subtasks': subtasks.map((s) => s.toMap()).toList(),
+      'userId': userId,
     };
   }
 
-  /// ✅ Create Task from Firestore data with improved safety
+  /// Create Task from Firestore data with improved safety
   factory Task.fromMap(Map<String, dynamic> map, String docId) {
     return Task(
       id: docId,
@@ -128,11 +134,13 @@ class Task {
       isCompleted: map['isCompleted'] as bool? ?? false,
       subtasks: (map['subtasks'] as List<dynamic>?)
           ?.map((s) => SubTask.fromMap(s as Map<String, dynamic>))
-          .toList() ?? [],
+          .toList() ??
+          [],
+      userId: map['userId'] ?? '',
     );
   }
 
-  /// ✅ Create a modified copy of Task
+  /// Create a modified copy of Task
   Task copyWith({
     String? id,
     String? title,
@@ -141,6 +149,7 @@ class Task {
     DateTime? dueDate,
     bool? isCompleted,
     List<SubTask>? subtasks,
+    String? userId,
   }) {
     return Task(
       id: id ?? this.id,
@@ -150,16 +159,15 @@ class Task {
       dueDate: dueDate ?? this.dueDate,
       isCompleted: isCompleted ?? this.isCompleted,
       subtasks: subtasks != null ? List.unmodifiable(subtasks) : this.subtasks,
+      userId: userId ?? this.userId,
     );
   }
 
-  /// ✅ Ensure unique Task comparisons
+  /// Ensure unique Task comparisons
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          (other is Task &&
-              runtimeType == other.runtimeType &&
-              id == other.id);
+          (other is Task && runtimeType == other.runtimeType && id == other.id);
 
   @override
   int get hashCode => id.hashCode;

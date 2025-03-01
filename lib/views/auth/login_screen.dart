@@ -11,7 +11,6 @@ class LoginScreen extends StatelessWidget {
     return Scaffold(
       body: Consumer<AuthController>(
         builder: (context, authController, child) {
-          // ✅ Ensure context is mounted before navigation
           if (authController.user != null) {
             Future.microtask(() {
               if (context.mounted) {

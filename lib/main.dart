@@ -11,39 +11,41 @@ import 'views/auth/auth_wrapper.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 🔹 Initialize Firebase
+  // Initialize Firebase
   await Firebase.initializeApp();
 
-  // 🔹 Initialize Hive
+  //Initialize Hive
   await Hive.initFlutter();
 
-  // 🔹 Register Hive Adapters BEFORE opening boxes
+  // Register Hive Adapters BEFORE opening boxes
   Hive.registerAdapter(TaskAdapter());
   Hive.registerAdapter(PriorityAdapter());
   Hive.registerAdapter(SubTaskAdapter());
 
-  // 🔹 Open Hive Boxes
+  // Open Hive Boxes
   await Hive.openBox<Task>('tasks');
   await Hive.openBox<SubTask>('subtasks');
-
-  // 🔹 Debugging: Print stored tasks
-  var taskBox = Hive.box<Task>('tasks');
-  print("📦 Tasks stored in Hive: ${taskBox.length}");
-  for (var task in taskBox.values) {
-    print("🔥 Task: ${task.title} - Subtasks: ${task.subtasks.length}");
-  }
 
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => AuthController()),
-        ChangeNotifierProvider(create: (context) => ThemeController()),
-        ChangeNotifierProvider(create: (context) => TaskController()),
+        ChangeNotifierProvider<AuthController>(create: (_) => AuthController()),
+        ChangeNotifierProvider<ThemeController>(create: (_) => ThemeController()),
+
+        /// Provides TaskController with currentUserId from AuthController and rebuilds it when auth state changes.
+        ChangeNotifierProxyProvider<AuthController, TaskController>(
+          create: (context) => TaskController(
+            currentUserId: Provider.of<AuthController>(context, listen: false).user?.uid ?? '',
+          ),
+          update: (context, authController, previousTaskController) =>
+              TaskController(currentUserId: authController.user?.uid ?? ''),
+        ),
       ],
       child: Consumer<ThemeController>(
         builder: (context, themeController, child) {

@@ -14,7 +14,6 @@ class TaskCard extends StatefulWidget {
 }
 
 class _TaskCardState extends State<TaskCard> {
-  // You can default to false or true depending on your preference
   bool _isExpanded = false;
 
   @override
@@ -110,8 +109,6 @@ class _TaskCardState extends State<TaskCard> {
         return const Icon(Icons.warning, color: Colors.orange);
       case Priority.low:
         return const Icon(Icons.low_priority, color: Colors.green);
-      default:
-        return const SizedBox.shrink();
     }
   }
 }

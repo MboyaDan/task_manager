@@ -29,6 +29,7 @@ class _AuthFormState extends State<AuthForm> with SingleTickerProviderStateMixin
   bool _isGoogleLoading = false;
   String? _errorMessage;
   late AnimationController _controller;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -63,7 +64,7 @@ class _AuthFormState extends State<AuthForm> with SingleTickerProviderStateMixin
     setState(() => _isLoading = false);
 
     if (error != null) {
-      _showError(error); // Error is already formatted in AuthController
+      _showError(error);
     }
   }
 
@@ -78,7 +79,7 @@ class _AuthFormState extends State<AuthForm> with SingleTickerProviderStateMixin
     setState(() => _isGoogleLoading = false);
 
     if (error != null) {
-      _showError(error); // Error is already formatted in AuthController
+      _showError(error);
     }
   }
 
@@ -98,7 +99,7 @@ class _AuthFormState extends State<AuthForm> with SingleTickerProviderStateMixin
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // App Title with Animation
+              // App Title
               Text(
                 "Tasker",
                 style: Theme.of(context).textTheme.headlineLarge!.copyWith(
@@ -153,8 +154,20 @@ class _AuthFormState extends State<AuthForm> with SingleTickerProviderStateMixin
                             labelText: "Password",
                             prefixIcon: Icon(Icons.lock, color: Colors.blueGrey[600]),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            // Suffix icon to toggle password visibility
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                color: Colors.blueGrey[600],
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                            ),
                           ),
-                          obscureText: true,
+                          obscureText: _obscurePassword,
                           validator: (value) {
                             if (value == null || value.length < 6) return "Password must be at least 6 characters";
                             return null;

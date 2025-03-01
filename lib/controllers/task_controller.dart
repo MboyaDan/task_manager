@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/task_model.dart';
 
 class TaskController extends ChangeNotifier {
+  final String currentUserId; // current logged-in user's ID
   late Box<Task> _taskBox;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   List<Task> _tasks = [];
@@ -13,7 +14,7 @@ class TaskController extends ChangeNotifier {
   List<Task> get tasks => _tasks;
   List<Task> get filteredTasks => _filteredTasks;
 
-  TaskController() {
+  TaskController({required this.currentUserId}) {
     _initialize();
   }
 
@@ -28,7 +29,7 @@ class TaskController extends ChangeNotifier {
       _syncWithFirestore();
       _isInitialized = true;
     } catch (e) {
-      debugPrint("🔥 Error initializing Hive: $e");
+      debugPrint("Error initializing Hive: $e");
     }
   }
 
@@ -37,19 +38,36 @@ class TaskController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Load tasks from Hive storage
+  /// Load tasks from Hive storage (only tasks belonging to the current user)
   void _loadTasks() {
-    _tasks = _taskBox.values.toList();
+    // If currentUserId is empty, clear tasks.
+    if (currentUserId.isEmpty) {
+      _tasks = [];
+      _filteredTasks = [];
+      notifyListeners();
+      return;
+    }
+    _tasks = _taskBox.values.where((task) => task.userId == currentUserId).toList();
     _filteredTasks = List.from(_tasks);
     notifyListeners();
   }
 
-  /// Sync tasks with Firestore in real time
+  /// Sync tasks with Firestore in real time (filter by current user)
   void _syncWithFirestore() {
-    _firestore.collection('tasks').snapshots().listen((snapshot) {
-      final newTasks = snapshot.docs
-          .map((doc) => Task.fromMap(doc.data(), doc.id))
-          .toList();
+    // If no user is logged in, clear tasks and do not sync.
+    if (currentUserId.isEmpty) {
+      _tasks = [];
+      _filteredTasks = [];
+      notifyListeners();
+      return;
+    }
+    _firestore
+        .collection('tasks')
+        .where('userId', isEqualTo: currentUserId)
+        .snapshots()
+        .listen((snapshot) {
+      final newTasks =
+      snapshot.docs.map((doc) => Task.fromMap(doc.data(), doc.id)).toList();
       for (var task in newTasks) {
         _taskBox.put(task.id, task);
       }
@@ -57,36 +75,38 @@ class TaskController extends ChangeNotifier {
       _filteredTasks = List.from(_tasks);
       notifyListeners();
     }, onError: (error) {
-      debugPrint("🔥 Error syncing with Firestore: $error");
+      debugPrint("Error syncing with Firestore: $error");
     });
   }
 
   /// Add a new task
   Future<void> addTask(Task task) async {
     try {
-      await _taskBox.put(task.id, task);
+      // Ensure the task's userId is set to the current user
+      final newTask = task.copyWith(userId: currentUserId);
+      await _taskBox.put(newTask.id, newTask);
       await _firestore
           .collection('tasks')
-          .doc(task.id)
-          .set(task.toMap(), SetOptions(merge: true));
-      _tasks.add(task);
-      _filteredTasks = List.from(_tasks);
-      notifyListeners();
+          .doc(newTask.id)
+          .set(newTask.toMap(), SetOptions(merge: true));
+      // Rely on Firestore snapshots to update _tasks—avoid manual insertion.
     } catch (error) {
-      debugPrint("🔥 Error adding task: $error");
+      debugPrint("Error adding task: $error");
     }
   }
 
   /// Edit an existing task
   Future<void> editTask(String id, Task updatedTask) async {
     try {
-      await _taskBox.put(id, updatedTask);
-      await _firestore.collection('tasks').doc(id).update(updatedTask.toMap());
-      _tasks = _tasks.map((task) => task.id == id ? updatedTask : task).toList();
+      // Ensure userId remains set to currentUserId
+      final taskToUpdate = updatedTask.copyWith(userId: currentUserId);
+      await _taskBox.put(id, taskToUpdate);
+      await _firestore.collection('tasks').doc(id).update(taskToUpdate.toMap());
+      _tasks = _tasks.map((task) => task.id == id ? taskToUpdate : task).toList();
       _filteredTasks = List.from(_tasks);
       notifyListeners();
     } catch (error) {
-      debugPrint("🔥 Error editing task: $error");
+      debugPrint("Error editing task: $error");
     }
   }
 
@@ -99,7 +119,7 @@ class TaskController extends ChangeNotifier {
       _filteredTasks = List.from(_tasks);
       notifyListeners();
     } catch (error) {
-      debugPrint("🔥 Error deleting task: $error");
+      debugPrint("Error deleting task: $error");
     }
   }
 
@@ -118,7 +138,7 @@ class TaskController extends ChangeNotifier {
       _filteredTasks = List.from(_tasks);
       notifyListeners();
     } catch (error) {
-      debugPrint("🔥 Error toggling task completion: $error");
+      debugPrint("Error toggling task completion: $error");
     }
   }
 
@@ -142,7 +162,7 @@ class TaskController extends ChangeNotifier {
       _filteredTasks = List.from(_tasks);
       notifyListeners();
     } catch (error) {
-      debugPrint("🔥 Error toggling subtask completion: $error");
+      debugPrint("Error toggling subtask completion: $error");
     }
   }
 
@@ -152,7 +172,6 @@ class TaskController extends ChangeNotifier {
       int taskIndex = _tasks.indexWhere((t) => t.id == taskId);
       if (taskIndex == -1) return;
       Task task = _tasks[taskIndex];
-      // Create a new list instance to trigger updates in Hive and Firestore
       List<SubTask> updatedSubtasks = List.from(task.subtasks)..add(newSubtask);
       Task updatedTask = task.copyWith(subtasks: updatedSubtasks);
       await _taskBox.put(taskId, updatedTask);
@@ -163,7 +182,7 @@ class TaskController extends ChangeNotifier {
       _filteredTasks = List.from(_tasks);
       notifyListeners();
     } catch (error) {
-      debugPrint("🔥 Error adding subtask: $error");
+      debugPrint("Error adding subtask: $error");
     }
   }
 
@@ -185,7 +204,7 @@ class TaskController extends ChangeNotifier {
       _filteredTasks = List.from(_tasks);
       notifyListeners();
     } catch (error) {
-      debugPrint("🔥 Error updating subtask: $error");
+      debugPrint("Error updating subtask: $error");
     }
   }
 
@@ -195,7 +214,6 @@ class TaskController extends ChangeNotifier {
       int taskIndex = _tasks.indexWhere((t) => t.id == taskId);
       if (taskIndex == -1) return;
       Task task = _tasks[taskIndex];
-      // Filter out the subtask to be deleted
       List<SubTask> updatedSubtasks =
       task.subtasks.where((s) => s.id != subtaskId).toList();
       Task updatedTask = task.copyWith(subtasks: updatedSubtasks);
@@ -207,7 +225,7 @@ class TaskController extends ChangeNotifier {
       _filteredTasks = List.from(_tasks);
       notifyListeners();
     } catch (error) {
-      debugPrint("🔥 Error deleting subtask: $error");
+      debugPrint("Error deleting subtask: $error");
     }
   }
 
@@ -232,7 +250,7 @@ class TaskController extends ChangeNotifier {
       _filteredTasks.clear();
       notifyListeners();
     } catch (error) {
-      debugPrint("🔥 Error clearing tasks: $error");
+      debugPrint("Error clearing tasks: $error");
     }
   }
 }

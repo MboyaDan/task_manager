@@ -25,7 +25,7 @@ class RegisterScreen extends StatelessWidget {
           return AuthForm(
             title: "Register",
             buttonText: "Register",
-            onSubmit: (email, password) => authController.signUp(email, password), // ✅ Removed `context`
+            onSubmit: (email, password) => authController.signUp(email, password),
             switchScreen: () => Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => LoginScreen()),

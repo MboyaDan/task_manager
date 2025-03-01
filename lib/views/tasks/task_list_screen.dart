@@ -6,6 +6,7 @@ import '../../controllers/theme_controller.dart';
 import '../../models/task_model.dart';
 import 'task_add_edit_screen.dart';
 import '/widgets/task_card.dart';
+import 'package:task_manager/views/auth/login_screen.dart';
 
 class TaskListScreen extends StatefulWidget {
   const TaskListScreen({Key? key}) : super(key: key);
@@ -41,7 +42,14 @@ class _TaskListScreenState extends State<TaskListScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () async => await authController.signOut(),
+            onPressed: () async {
+              await authController.signOut();
+              /// Clear the navigation stack and navigate to the LoginScreen
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => LoginScreen()),
+                    (route) => false,
+              );
+            },
           ),
         ],
       ),
@@ -58,7 +66,8 @@ class _TaskListScreenState extends State<TaskListScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => TaskEditScreen()),
-          ).then((_) => Provider.of<TaskController>(context, listen: false).refreshTasks());
+          ).then((_) =>
+              Provider.of<TaskController>(context, listen: false).refreshTasks());
         },
         child: const Icon(Icons.add),
       )
@@ -71,7 +80,8 @@ class _TaskListScreenState extends State<TaskListScreen> {
       padding: const EdgeInsets.all(8.0),
       child: TextField(
         controller: _searchController,
-        onChanged: (query) => Provider.of<TaskController>(context, listen: false).filterTasks(query),
+        onChanged: (query) =>
+            Provider.of<TaskController>(context, listen: false).filterTasks(query),
         decoration: InputDecoration(
           labelText: "Search Tasks",
           prefixIcon: const Icon(Icons.search),

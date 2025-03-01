@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/task_controller.dart';
+import '../../controllers/auth_controller.dart';
 import '../../models/task_model.dart';
 
 class TaskEditScreen extends StatefulWidget {
@@ -41,6 +42,8 @@ class _TaskEditScreenState extends State<TaskEditScreen> {
   void _saveTask() {
     if (_formKey.currentState!.validate()) {
       final taskController = Provider.of<TaskController>(context, listen: false);
+      // Retrieve the current user's id from AuthController.
+      final currentUserId = Provider.of<AuthController>(context, listen: false).userId;
       final newTask = Task(
         id: widget.task?.id ?? UniqueKey().toString(), // Ensure ID is a String
         title: _titleController.text,
@@ -49,12 +52,13 @@ class _TaskEditScreenState extends State<TaskEditScreen> {
         priority: _priority,
         isCompleted: _isCompleted,
         subtasks: widget.task?.subtasks ?? [],
+        userId: currentUserId, // Pass the current user's ID here
       );
 
       if (widget.task == null) {
         taskController.addTask(newTask);
       } else {
-        taskController.editTask(newTask.id, newTask); // Ensure ID is passed as String
+        taskController.editTask(newTask.id, newTask);
       }
       Navigator.pop(context);
     }

@@ -13,10 +13,10 @@ class FirestoreService {
     }
   }
 
-  // Add a task to both Hive and Firestore
+  //Add a task to both Hive and Firestore
   Future<void> addTask(Task task) async {
     _taskBox.put(task.id, task); // Save locally
-    await _db.collection("tasks").doc(task.id).set(task.toMap()); // Save to Firestore
+    await _db.collection("tasks").doc(task.id).set(task.toMap());
   }
 
   // Get tasks from Firestore
