@@ -1,7 +1,6 @@
 # Task Manager
 
-Task Manager is a Flutter-based task management application built as 
-a take-home assignment. It allows users to sign up, log in, and manage 
+This is anFlutter-based task management application built as . It allows users to sign up, log in, and manage 
 their own tasks and subtasks. The app features local persistence with Hive, real-time 
 synchronization with Firebase Firestore, and state management using Provider.
 
